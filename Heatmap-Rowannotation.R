@@ -1,66 +1,9 @@
-library(tidyverse)
-library(hrbrthemes)
-library(viridis)
-library(plotly)
-library(heatmaply)
+
 library(ComplexHeatmap)
 library(circlize)
 
-
-#1. download OTU file from github human_16S.even13190.rel.sig.csv
-
-
-##-- global variables
-rare.depth = 13190
-
-otu2 <- read.csv('https://raw.githubusercontent.com/cribioinfo/sci2017_analysis/master/data/human_16S.even13190.rel.sig.csv')
-
-print(dim(otu2)) #63 42
-
-sample2 <- read.csv('https://raw.githubusercontent.com/cribioinfo/sci2017_analysis/master/data/human_16S.sampleinfo.csv')
-
-dim(sample2)
-
-#2. file combination
-
-library(magrittr)
-
-otu2 <- otu2[-1] %>%
-  t() %>%
-  as.data.frame() %>%
-  setNames((otu2[,1])) %>%
-  tibble::rownames_to_column("Sample")
-
-##-- file combination
-
-sample3 <- sample2 %>%
-  select(Sample, Response)
-
-joined_data <- left_join(otu2,sample3, by = "Sample")
-
-write.csv(joined_data, file="Heatmap Joined Data.csv",row.names=FALSE)
-
 # import the saved csv
 work_data <- read.csv(file="Heatmap Joined Data.csv",row.names = 1 )
-
-#transpose work_data into 64/42(including response)
-#final_data <- as.data.frame(t(work_data))
-
-#final <- final_data[-64,]
-
-
-#dim(final)
-#str(final_data)
-#head(final_data)
-
-colnames(joined_data)[1] <- "" #delete the name of column 1:Sample
-#colnames(joined_data)[65] <- "" #delet the name of column 65:Response
-
-
-dim(joined_data)
-
-#str(work_data)
-#print(dim(work_data)) #42 64(63+response)  63/42
 
 ##-- convert to log scale 
 otu_log = log10(round(work_data[1:63] * rare.depth) + 1)
@@ -72,7 +15,6 @@ joined_data_plot = t(scale(t(as.matrix(otu_log)), scale=FALSE))
 joined_sample_anno = joined_data[,c('Response'),drop=FALSE]
 joined_sample_anno = joined_sample_anno[order(match(row.names(joined_sample_anno),
                                       row.names(joined_data_plot))),,drop=F]
-
 joined_plot_colors = c('NonResponder' = '#0000CC','Responder'='#CC0000')
 
 joined_sample_anno_colors = list(
